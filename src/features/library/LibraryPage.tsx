@@ -6,6 +6,8 @@ import { EXERCISES, GROUPS } from '../../data/exercises';
 import { useDebounce } from '../../hooks/useDebounce';
 import type { Exercise, MuscleGroup } from '../../types';
 import { ExerciseRow } from './ExerciseRow';
+import { useSessionStore } from '../session/useSessionStore';
+import { useSavedStore } from '../saved/useSavedStore';
 
 type GroupFilter = 'all' | MuscleGroup;
 type SortOrder = 'default' | 'name' | 'duration';
@@ -13,12 +15,18 @@ type SortOrder = 'default' | 'name' | 'duration';
 interface RowData {
   exercises: Exercise[];
   onStart: (exercise: Exercise) => void;
+  onToggleSaved: (exercise: Exercise) => void;
+  onAddToSession: (exercise: Exercise) => void;
 }
 
 // Khai báo bên ngoài để component dòng không bị tạo lại khi gõ tìm kiếm.
 function VirtualRow({ index, style, data }: ListChildComponentProps<RowData>) {
-  return <ExerciseRow exercise={data.exercises[index]} position={index + 1}
-    style={style} onStart={data.onStart} />;
+  const exercise = data.exercises[index];
+  // Mỗi dòng theo dõi riêng trạng thái lưu của chính bài đó.
+  const isSaved = useSavedStore(state => state.ids.includes(exercise.id));
+  return <ExerciseRow exercise={exercise} position={index + 1}
+    style={style} onStart={data.onStart} isSaved={isSaved}
+    onToggleSaved={data.onToggleSaved} onAddToSession={data.onAddToSession} />;
 }
 
 function itemKey(index: number, data: RowData): string {
@@ -51,7 +59,9 @@ export default function LibraryPage() {
   const [keyword, setKeyword] = useState('');
   const [group, setGroup] = useState<GroupFilter>('all');
   const [sort, setSort] = useState<SortOrder>('default');
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const startSession = useSessionStore(state => state.startSession);
+  const addToSession = useSessionStore(state => state.addToSession);
+  const toggleSaved = useSavedStore(state => state.toggle);
   const debouncedKeyword = useDebounce(keyword, 300);
 
   const handleKeywordShift = useCallback((event: ChangeEvent<HTMLInputElement>) => {
@@ -70,11 +80,17 @@ export default function LibraryPage() {
     return result;
   }, [debouncedKeyword, group, sort]);
 
-  // Điểm nối với startSession của Zustand trong Phần 2.
-  const handleStart = useCallback((exercise: Exercise) => setSelectedExercise(exercise), []);
+  const handleStart = useCallback((exercise: Exercise) => {
+    // Buổi tập là toàn bộ kết quả đã lọc/sắp xếp, không chỉ các dòng đang mount.
+    const index = filteredExercises.findIndex(item => item.id === exercise.id);
+    startSession(filteredExercises, index);
+  }, [filteredExercises, startSession]);
+  const handleSaved = useCallback((exercise: Exercise) => toggleSaved(exercise.id), [toggleSaved]);
+  const handleAdd = useCallback((exercise: Exercise) => addToSession(exercise), [addToSession]);
   const rowData = useMemo<RowData>(() => ({
     exercises: filteredExercises, onStart: handleStart,
-  }), [filteredExercises, handleStart]);
+    onToggleSaved: handleSaved, onAddToSession: handleAdd,
+  }), [filteredExercises, handleStart, handleSaved, handleAdd]);
 
   return (
     <>
@@ -105,7 +121,6 @@ export default function LibraryPage() {
         {filteredExercises.length === 0 ? <div className="empty-state">Không tìm thấy bài tập nào</div>
           : <ExerciseList data={rowData} />}
       </section>
-      {selectedExercise && <p className="selection-notice" role="status">Bài tập đã chọn: {selectedExercise.name}</p>}
     </>
   );
 }

@@ -7,5 +7,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
     coverage: { include: ['src/features/**', 'src/utils/**'] },
+    pool: 'vmThreads',
   },
 });

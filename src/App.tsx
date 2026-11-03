@@ -1,6 +1,8 @@
 const BUILD_TAG = "wk-5182";
 import { NavLink, Route, Routes } from 'react-router-dom';
 import LibraryPage from './features/library/LibraryPage';
+import SavedPage from './features/saved/SavedPage';
+import { SessionBar } from './features/session/SessionBar';
 
 function PendingPage({ title }: { title: string }) {
   return <section className="panel placeholder"><h1>{title}</h1>
@@ -21,11 +23,12 @@ export default function App() {
       </div></header>
       <main className="container"><Routes>
         <Route path="/" element={<LibraryPage />} />
-        <Route path="/saved" element={<PendingPage title="Bài tập đã lưu" />} />
+        <Route path="/saved" element={<SavedPage />} />
         <Route path="/routines" element={<PendingPage title="Giáo án" />} />
         <Route path="/routines/:id" element={<PendingPage title="Chi tiết giáo án" />} />
         <Route path="*" element={<PendingPage title="Không tìm thấy trang" />} />
       </Routes></main>
+      <SessionBar />
     </div>
   );
 }
