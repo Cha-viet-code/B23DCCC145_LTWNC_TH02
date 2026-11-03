@@ -6,7 +6,16 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
-    coverage: { include: ['src/features/**', 'src/utils/**'] },
-    pool: 'vmThreads',
+    coverage: {
+      provider: 'v8',
+      include: ['src/features/**', 'src/utils/**'],
+      exclude: ['**/*.test.ts', '**/*.test.tsx'],
+      reporter: [['text', { skipFull: false }], 'html', 'json', 'json-summary'],
+      thresholds: {
+        lines: 70,
+        'src/features/**': { lines: 70 },
+        'src/utils/**': { lines: 70 },
+      },
+    },
   },
 });

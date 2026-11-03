@@ -30,7 +30,7 @@ it('Tập tất cả dùng đúng bài đã lưu và Bỏ lưu cập nhật danh
   expect(screen.queryByText('Đẩy tạ đơn 1')).not.toBeInTheDocument();
 });
 
-it('lưu từ kho bài tập và đổi trang vẫn giữ đồng hồ buổi tập', () => {
+it('lưu từ kho bài tập và đổi trang vẫn giữ đồng hồ buổi tập', async () => {
   const { container } = render(<MemoryRouter><App /></MemoryRouter>);
   const row = container.querySelector('[data-exercise-id="e1"]');
   expect(row).not.toBeNull();
@@ -40,7 +40,7 @@ it('lưu từ kho bài tập và đổi trang vẫn giữ đồng hồ buổi t�
   expect(useSessionStore.getState().queue).toHaveLength(1);
   fireEvent.click(within(row as HTMLElement).getByRole('button', { name: 'Bắt đầu' }));
   fireEvent.click(screen.getByRole('link', { name: 'Đã lưu' }));
-  expect(screen.getByRole('heading', { name: 'Bài tập đã lưu' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Bài tập đã lưu' })).toBeInTheDocument();
   expect(screen.getByText('Đang tập: Đẩy tạ đơn 1 – HLV Minh Khang')).toBeInTheDocument();
   expect(screen.getByText('Buổi tập: 10000 bài')).toBeInTheDocument();
   act(() => useSessionStore.getState().toggleRun());

@@ -1,3 +1,4 @@
+import { RoutineProvider } from '../routines/RoutineContext';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Profiler } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -59,7 +60,7 @@ it('unmount thanh đồng hồ sẽ dọn interval', () => {
 
 it('danh sách kho bài tập không render lại theo mỗi tick', () => {
   const onRender = vi.fn();
-  render(<><Profiler id="library" onRender={onRender}><LibraryPage /></Profiler><SessionBar /></>);
+  render(<><Profiler id="library" onRender={onRender}><RoutineProvider><LibraryPage /></RoutineProvider></Profiler><SessionBar /></>);
   // Hoàn tất debounce khởi tạo trước khi đo các tick của đồng hồ.
   act(() => vi.advanceTimersByTime(300));
   act(() => useSessionStore.getState().startSession(EXERCISES.slice(0, 2), 0));
