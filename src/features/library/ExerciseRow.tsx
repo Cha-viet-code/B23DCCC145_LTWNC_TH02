@@ -11,14 +11,19 @@ export interface ExerciseRowProps {
   onToggleSaved?: (exercise: Exercise) => void;
   onAddToSession?: (exercise: Exercise) => void;
   isSaved?: boolean;
+  onAddToRoutine?: (exercise: Exercise) => void;
+  canAddToRoutine?: boolean;
 }
 
 export const ExerciseRow = memo(function ExerciseRow({
   exercise, position, style, onStart, onToggleSaved, onAddToSession, isSaved = false,
+  onAddToRoutine, canAddToRoutine = false,
 }: ExerciseRowProps) {
   const handleStart = useCallback(() => onStart(exercise), [onStart, exercise]);
   const handleSaved = useCallback(() => onToggleSaved?.(exercise), [onToggleSaved, exercise]);
   const handleAdd = useCallback(() => onAddToSession?.(exercise), [onAddToSession, exercise]);
+
+  const handleRoutine = useCallback(() => onAddToRoutine?.(exercise), [onAddToRoutine, exercise]);
 
   return (
     <div className="exercise-row" style={style} data-exercise-id={exercise.id}>
@@ -33,6 +38,8 @@ export const ExerciseRow = memo(function ExerciseRow({
           disabled={!onToggleSaved} aria-label={isSaved ? 'Bỏ lưu' : 'Lưu bài tập'}
           aria-pressed={isSaved}>{isSaved ? '★' : '☆'}</button>
         <button className="button-small" onClick={handleAdd} disabled={!onAddToSession}>+ Buổi tập</button>
+        {onAddToRoutine && <button className="button-small" onClick={handleRoutine}
+          disabled={!canAddToRoutine}>+ Giáo án</button>}
       </div>
     </div>
   );

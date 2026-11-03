@@ -1,15 +1,17 @@
 const BUILD_TAG = "wk-5182";
+import { lazy, Suspense } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import LibraryPage from './features/library/LibraryPage';
-import SavedPage from './features/saved/SavedPage';
 import { SessionBar } from './features/session/SessionBar';
+import { RoutineProvider } from './features/routines/RoutineContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
-function PendingPage({ title }: { title: string }) {
-  return <section className="panel placeholder"><h1>{title}</h1>
-    <p className="muted">Trang này sẽ được hoàn thiện ở phần tiếp theo.</p></section>;
-}
+const SavedPage = lazy(() => import('./features/saved/SavedPage'));
+const RoutinesPage = lazy(() => import('./features/routines/RoutinesPage'));
+const RoutineDetailPage = lazy(() => import('./features/routines/RoutineDetailPage'));
 
-export default function App() {
+function AppLayout() {
+  const { theme, toggleTheme } = useTheme();
   return (
     <div data-build-tag={BUILD_TAG}>
       <header className="topbar"><div className="topbar-inner">
@@ -19,16 +21,21 @@ export default function App() {
           <NavLink to="/" end>Kho bài tập</NavLink>
           <NavLink to="/saved">Đã lưu</NavLink><NavLink to="/routines">Giáo án</NavLink>
         </nav>
-        <span className="course-tag">BẤM GIỜ TẬP LUYỆN</span>
+        <button className="theme-toggle" onClick={toggleTheme}>
+          {theme === 'light' ? 'Giao diện tối' : 'Giao diện sáng'}</button>
       </div></header>
-      <main className="container"><Routes>
+      <main className="container"><Suspense fallback={<p>Đang tải trang...</p>}><Routes>
         <Route path="/" element={<LibraryPage />} />
         <Route path="/saved" element={<SavedPage />} />
-        <Route path="/routines" element={<PendingPage title="Giáo án" />} />
-        <Route path="/routines/:id" element={<PendingPage title="Chi tiết giáo án" />} />
-        <Route path="*" element={<PendingPage title="Không tìm thấy trang" />} />
-      </Routes></main>
+        <Route path="/routines" element={<RoutinesPage />} />
+        <Route path="/routines/:id" element={<RoutineDetailPage />} />
+        <Route path="*" element={<section className="panel placeholder"><h1>Không tìm thấy trang</h1></section>} />
+      </Routes></Suspense></main>
       <SessionBar />
     </div>
   );
+}
+
+export default function App() {
+  return <ThemeProvider><RoutineProvider><AppLayout /></RoutineProvider></ThemeProvider>;
 }

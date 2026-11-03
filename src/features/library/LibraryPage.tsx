@@ -8,6 +8,7 @@ import type { Exercise, MuscleGroup } from '../../types';
 import { ExerciseRow } from './ExerciseRow';
 import { useSessionStore } from '../session/useSessionStore';
 import { useSavedStore } from '../saved/useSavedStore';
+import { useRoutines, useRoutineDispatch } from '../routines/RoutineContext';
 
 type GroupFilter = 'all' | MuscleGroup;
 type SortOrder = 'default' | 'name' | 'duration';
@@ -17,6 +18,8 @@ interface RowData {
   onStart: (exercise: Exercise) => void;
   onToggleSaved: (exercise: Exercise) => void;
   onAddToSession: (exercise: Exercise) => void;
+  onAddToRoutine: (exercise: Exercise) => void;
+  canAddToRoutine: boolean;
 }
 
 // Khai báo bên ngoài để component dòng không bị tạo lại khi gõ tìm kiếm.
@@ -26,7 +29,8 @@ function VirtualRow({ index, style, data }: ListChildComponentProps<RowData>) {
   const isSaved = useSavedStore(state => state.ids.includes(exercise.id));
   return <ExerciseRow exercise={exercise} position={index + 1}
     style={style} onStart={data.onStart} isSaved={isSaved}
-    onToggleSaved={data.onToggleSaved} onAddToSession={data.onAddToSession} />;
+    onToggleSaved={data.onToggleSaved} onAddToSession={data.onAddToSession}
+    onAddToRoutine={data.onAddToRoutine} canAddToRoutine={data.canAddToRoutine} />;
 }
 
 function itemKey(index: number, data: RowData): string {
@@ -59,6 +63,11 @@ export default function LibraryPage() {
   const [keyword, setKeyword] = useState('');
   const [group, setGroup] = useState<GroupFilter>('all');
   const [sort, setSort] = useState<SortOrder>('default');
+  const routines = useRoutines();
+  const dispatch = useRoutineDispatch();
+  const [selectedRoutineId, setSelectedRoutineId] = useState('');
+  const activeRoutineId = routines.some(routine => routine.id === selectedRoutineId)
+    ? selectedRoutineId : (routines[0]?.id ?? '');
   const startSession = useSessionStore(state => state.startSession);
   const addToSession = useSessionStore(state => state.addToSession);
   const toggleSaved = useSavedStore(state => state.toggle);
@@ -87,10 +96,14 @@ export default function LibraryPage() {
   }, [filteredExercises, startSession]);
   const handleSaved = useCallback((exercise: Exercise) => toggleSaved(exercise.id), [toggleSaved]);
   const handleAdd = useCallback((exercise: Exercise) => addToSession(exercise), [addToSession]);
+  const handleRoutine = useCallback((exercise: Exercise) => {
+    if (activeRoutineId) dispatch({ type: 'addExercise', id: activeRoutineId, exerciseId: exercise.id });
+  }, [activeRoutineId, dispatch]);
   const rowData = useMemo<RowData>(() => ({
     exercises: filteredExercises, onStart: handleStart,
     onToggleSaved: handleSaved, onAddToSession: handleAdd,
-  }), [filteredExercises, handleStart, handleSaved, handleAdd]);
+    onAddToRoutine: handleRoutine, canAddToRoutine: Boolean(activeRoutineId),
+  }), [filteredExercises, handleStart, handleSaved, handleAdd, handleRoutine, activeRoutineId]);
 
   return (
     <>
@@ -116,6 +129,13 @@ export default function LibraryPage() {
               <option value="default">Mặc định</option><option value="name">Tên A–Z</option>
               <option value="duration">Thời lượng tăng dần</option>
             </select></div>
+        </div>
+        <div className="routine-picker"><label htmlFor="selected-routine">Giáo án đang chọn</label>
+          <select id="selected-routine" value={activeRoutineId} disabled={routines.length === 0}
+            onChange={event => setSelectedRoutineId(event.target.value)}>
+            {routines.length === 0 && <option value="">Chưa có giáo án</option>}
+            {routines.map(routine => <option key={routine.id} value={routine.id}>{routine.name}</option>)}
+          </select>
         </div>
         <div className="results-heading"><p role="status">Tìm thấy {filteredExercises.length} bài tập</p></div>
         {filteredExercises.length === 0 ? <div className="empty-state">Không tìm thấy bài tập nào</div>
